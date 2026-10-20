@@ -262,6 +262,17 @@ jobs:
             echo "ROOT_COMMIT=N/A"
           } >> "$GITHUB_ENV"
 
+      - name: K90U - Enable Container Resource Limits (CFS bandwidth + pids cgroup)
+        # 坑F: 厂商 HyperOS 原厂内核未开 CONFIG_CFS_BANDWIDTH / CONFIG_CGROUP_PIDS，
+        # 导致 Droidspaces 容器无法使用 CPU/内存/PID 资源限额。
+        # 已实测（2026-10-12）：开启这两项不改变厂商模块的 MODVERSIONS CRC
+        # （与现役内核逐符号一致，module_layout 均 0x4e276f37）。
+        uses: ./.github/actions/set-kernel-config
+        with:
+          config_list: |
+            CONFIG_CFS_BANDWIDTH=y
+            CONFIG_CGROUP_PIDS=y
+
       - name: Disable SUSFS for BakaSU without SUSFS feature
         if: inputs.root_flavor == 'bakasu' && !contains(inputs.feature_set, 'SUSFS')
         uses: ./.github/actions/set-kernel-config
