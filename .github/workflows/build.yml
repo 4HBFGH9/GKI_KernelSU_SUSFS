@@ -262,6 +262,39 @@ jobs:
             echo "ROOT_COMMIT=N/A"
           } >> "$GITHUB_ENV"
 
+      - name: K90U - apply cgroup kABI preservation patch
+        # 2026-10-21: CFS_BANDWIDTH/CGROUP_PIDS change task_group/cfs_rq layout -> CRC breaks
+        # (group-1 bisect measured 1682 FAIL). This patch (from oneplus 6.6.89/SM8750 tree)
+        # empties struct cfs_bandwidth to preserve layout and moves real state into
+        # task_group_allocation tail storage. Fails hard if it does not apply.
+        if: contains(inputs.feature_set, 'DS') || inputs.feature_set == 'All'
+        shell: bash
+        working-directory: ${{ github.workspace }}/kernel/common
+        run: |
+          set -euo pipefail
+          patch -p1 --no-backup-if-mismatch -F3 < "${{ github.workspace }}/k90u-patches/fix_cgroup_kabi.patch"
+          grep -q 'cfs_bandwidth_state' kernel/sched/sched.h || { echo 'kABI patch anchor missing: sched.h'; exit 1; }
+          grep -q 'css_set_subsys(cset' kernel/cgroup/pids.c || { echo 'kABI patch anchor missing: pids.c'; exit 1; }
+          echo '[OK] cgroup kABI patch applied, anchors verified'
+
+      - name: K90U - Droidspaces v7 Full Support
+        # 12 configs: 2 resource limits (need kABI patch above) + 10 network items (kABI-safe).
+        uses: ./.github/actions/set-kernel-config
+        with:
+          config_list: |
+            CONFIG_CFS_BANDWIDTH=y
+            CONFIG_CGROUP_PIDS=y
+            CONFIG_XT_MATCH_ADDRTYPE=y
+            CONFIG_MACVLAN=y
+            CONFIG_XT_TARGET_REJECT=y
+            CONFIG_XT_TARGET_LOG=y
+            CONFIG_XT_MATCH_RECENT=y
+            CONFIG_IP_SET=y
+            CONFIG_IP_SET_MAX=65534
+            CONFIG_IP_SET_HASH_IP=y
+            CONFIG_IP_SET_HASH_NET=y
+            CONFIG_NETFILTER_XT_SET=y
+
       - name: Disable SUSFS for BakaSU without SUSFS feature
         if: inputs.root_flavor == 'bakasu' && !contains(inputs.feature_set, 'SUSFS')
         uses: ./.github/actions/set-kernel-config
