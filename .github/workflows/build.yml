@@ -270,18 +270,9 @@ jobs:
         uses: ./.github/actions/set-kernel-config
         with:
           config_list: |
-            # CONFIG_CFS_BANDWIDTH=y
-            # CONFIG_CGROUP_PIDS=y
-            # CONFIG_NETFILTER_XT_MATCH_ADDRTYPE=y
-            # CONFIG_MACVLAN=y
-            # CONFIG_NETFILTER_XT_TARGET_REJECT=y
-            # CONFIG_NETFILTER_XT_TARGET_LOG=y
-            # CONFIG_NETFILTER_XT_MATCH_RECENT=y
-            # CONFIG_IP_SET=y
-            # CONFIG_IP_SET_MAX=65534
-            # CONFIG_IP_SET_HASH_IP=y
-            # CONFIG_IP_SET_HASH_NET=y
-            # CONFIG_NETFILTER_XT_SET=y
+            # 组1二分：只保留资源限额两项，验证它是否是 CRC 元凶
+            CONFIG_CFS_BANDWIDTH=y
+            CONFIG_CGROUP_PIDS=y
 
       - name: Disable SUSFS for BakaSU without SUSFS feature
         if: inputs.root_flavor == 'bakasu' && !contains(inputs.feature_set, 'SUSFS')
