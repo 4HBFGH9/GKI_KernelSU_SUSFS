@@ -43,6 +43,12 @@ runs:
           exit 0
         fi
 
+        # 2026-10-24 K90U: append build date (UTC, YYYYMMDD) to the brand tag so
+        # every build is self-dating, e.g. DroidSpaces-KSU-20261024.
+        STAMP="$(date -u +%Y%m%d)"
+        BRAND="${BRAND}-${STAMP}"
+        echo "[*] kernel release brand: $BRAND (built $(date -u +%Y-%m-%d))"
+
         KMI=""
         if [ "$KEEP_KMI" = "true" ]; then
           KMI=$(grep -h "^KMI_GENERATION" build.config.common build.config.constants 2>/dev/null | head -n 1 | cut -d= -f2)
